@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" />
+    <title>CAPTCHA test</title>
+    <style>
+      canvas {
+        display: none;
+      }
+      img {
+        border: solid black 1px;
+      }
+      captcha-holder {
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <section class="section">
+      <div class="container">
+        <h1 class="is-size-1 has-text-centered">Basic captcha breaker test</h1>
+        <div class="columns is-vcentered">
+          <div class="column is-narrow">
+            <div class="content">
+              <div class="columns">
+                <div class="column is-narrow">
+                  <div class="field">
+                    <label class="label"> Width </label>
+                    <input class="input" type="number" id="width" value="300" />
+                  </div>
+                  <div class="field">
+                    <label class="label"> Height </label>
+                    <input class="input" type="number" id="height" value="100" />
+                  </div>
+                  <div class="field">
+                    <label class="label"> Maximum rotation </label>
+                    <input class="input" type="number" id="degrees" value="15" />
+                  </div>
+                </div>
+                <div class="column is-narrow">
+                  <div class="field">
+                    <label class="label"> Font Size </label>
+                    <input class="input" type="number" id="font-size" value="35" />
+                  </div>
+                  <div class="field">
+                    <label class="label"> Text Color </label>
+                    <div class="select">
+                      <select id="text-color">
+                        <option value="black">Black</option>
+                        <option value="white">White</option>
+                        <option value="color">Color</option>
+                        <option value="gradient">Gradient</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="field">
+                    <label class="label"> Background Color </label>
+                    <div class="select">
+                      <select id="bg-color">
+                        <option value="white">White</option>
+                        <option value="black">Black</option>
+                        <option value="color">Color</option>
+                        <option value="gradient">Gradient</option>
+                      </select>
+                    </div>
+                  </div>
+                  <!-- <div class="field">
+                        <label class="label"> Noise </label>
+                        <div class="select">
+                          <select id="noise">
+                            <option value="0">None</option>
+                            <option value="1">Low</option>
+                            <option value="2">Medium</option>
+                            <option value="3">High</option>
+                          </select>
+                        </div>
+                    </div> -->
+                  <input
+                    class="button is-primary"
+                    type="button"
+                    value="Generate"
+                    onclick="updateCaptcha()"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="column has-text-centered" id="captcha-holder">
+            <canvas></canvas>
+            <img />
+            <div class="answer is-size-4"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <script>
+      get = name => document.querySelector("#" + name).value
+
+      // https://gist.github.com/wesbos/1bb53baf84f6f58080548867290ac2b5
+      const alternateCapitals = str =>
+        [...str].map((char, i) => char[`to${i % 2 ? "Upper" : "Lower"}Case`]()).join("")
+
+      // Get a random string of alphanumeric characters
+      const randomText = () => alternateCapitals(Math.random().toString(36).substring(2, 8))
+
+      // Get a float between min and max
+      const arbitraryRandom = (min, max) => parseInt(Math.random() * (max - min) + min)
+
+      const randomColor = () => {
+        const h = arbitraryRandom(0, 360)
+        const s = arbitraryRandom(0, 100)
+        const l = arbitraryRandom(0, 100)
+        return `hsl(${h}, ${s}%, ${l}%)`
+      }
+
+      // Get a PNG dataURL of a captcha image
+      const generate = () => {
+        const width = get("width")
+        const height = get("height")
+        const maxDegrees = get("degrees")
+        const canvas = document.querySelector("#captcha-holder canvas")
+        canvas.setAttribute("width", width)
+        canvas.setAttribute("height", height)
+        const ctx = canvas.getContext("2d")
+
+        const randomGradient = () => {
+          const gradient = ctx.createLinearGradient(0, 0, width, height)
+          gradient.addColorStop(0, randomColor())
+          gradient.addColorStop(1, randomColor())
+          return gradient
+        }
+
+        const getColor = name => {
+          const color = get(name)
+          return color === "color" ? randomColor() : color === "gradient" ? randomGradient() : color
+        }
+
+        const rotation = (arbitraryRandom(-maxDegrees, maxDegrees) * Math.PI) / 180
+        const backgroundColor = getColor("bg-color")
+        const fontSize = get("font-size")
+        const text = randomText()
+        const textColor = getColor("text-color")
+
+        // Color background
+        ctx.fillStyle = backgroundColor
+        ctx.fillRect(0, 0, width, height)
+
+        // Prepare rotation
+        ctx.translate(width / 2, height / 2)
+        ctx.rotate(rotation)
+
+        // Draw text
+
+        ctx.fillStyle = textColor
+        ctx.font = `${fontSize}px serif`
+        ctx.textBaseline = "middle"
+        ctx.textAlign = "center"
+        ctx.fillText(text, 0, 0)
+
+        return {
+          image: canvas.toDataURL(),
+          text: text,
+        }
+      }
+    </script>
+
+    <script>
+      function updateCaptcha() {
+        const { image, text } = generate()
+        document.querySelector("#captcha-holder img").setAttribute("src", image)
+        document.querySelector("#captcha-holder .answer").innerText = text
+      }
+      window.addEventListener("load", updateCaptcha)
+    </script>
+  </body>
+</html>
