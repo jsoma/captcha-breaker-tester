@@ -88,11 +88,23 @@
             </div>
           </div>
           <div class="column has-text-centered" id="captcha-holder">
+            <div class="answer is-size-5"></div>
             <canvas></canvas>
             <img />
-            <div class="answer is-size-4"></div>
+
+            <div class="field has-addons has-addons-centered mt-5">
+              <div class="control">
+                <input class="input" type="text" placeholder="Your answer">
+              </div>
+              <div class="control">
+                <button class="button is-primary" onclick="checkCaptcha()">
+                  Test solution
+                </button>
+              </div>
+            </div>
+
+            <div class="is-size-4" id="result"></div>
           </div>
-        </div>
       </div>
     </section>
     <script>
@@ -163,6 +175,15 @@
           image: canvas.toDataURL(),
           text: text,
         }
+      }
+
+      const checkCaptcha = () => {
+        const answer = document.querySelector("#captcha-holder .answer").innerText
+        const input = document.querySelector("#captcha-holder input").value
+        const result = document.querySelector("#captcha-holder #result")
+        // make result red if incorrect, green if correct
+        result.style.color = answer === input ? "lightgreen" : "red"
+        result.innerText = answer === input ? "Correct!" : "Incorrect!"
       }
     </script>
 
